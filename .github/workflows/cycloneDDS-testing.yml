@@ -1,0 +1,40 @@
+on:
+    # Disable for now, we are testing a lot
+    # pull_request:
+    #     branches:
+    #         - master
+    push:
+        branches: "*"
+    workflow_dispatch:
+
+# Test recursion with
+# BUILD_SHARED_LIBS = OFF
+# BUILD_TESTING = ON
+
+jobs:
+    build_and_test:
+        strategy:
+            matrix:
+                # TODO # also add [ubuntu-24.04, ubuntu-22.04, ubuntu-24.04-arm, ubuntu-22.04-arm, windows-11-arm]
+                # os: [ubuntu-latest, windows-latest, macos-latest]
+                os: [windows-latest, ubuntu-latest]
+                build_type: [Debug, Release] # , RelWithDebInfo]
+                cmake_version: [3.31]   # [3.16, 3.31]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - uses: actions/checkout@v4
+              name: Checkout the repository
+            - if: ${{ matrix.build_type != 'Debug' }}
+              run: |
+                mkdir build
+                cd build
+                cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+                cmake --build .
+              name: build_release
+            - if: ${{ matrix.build_type == 'Debug' }}
+              run: |
+                mkdir build
+                cd build
+                cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+                cmake --build .
+              name: build_debug
