@@ -53,7 +53,7 @@ DDS_EXPORT void ddsi_plist_fini_generic (void * restrict dst, const enum ddsi_ps
 void ddsi_plist_ser_generic_size_embeddable (size_t *dstoff, const void *src, size_t srcoff, const enum ddsi_pserop *desc);
 
 /** @component parameter_list */
-DDS_EXPORT dds_return_t ddsi_plist_deser_generic (void * restrict dst, const void *src, size_t srcsize, bool bswap, const enum ddsi_pserop *desc);
+DDS_EXPORT dds_return_t ddsi_plist_deser_generic (void * restrict dst, const void * restrict src, size_t srcsize, bool bswap, const enum ddsi_pserop *desc);
 
 /** @component parameter_list */
 dds_return_t ddsi_plist_deser_generic_srcoff (void * restrict dst, const void *src, size_t srcsize, size_t * restrict srcoff, bool bswap, const enum ddsi_pserop *desc);

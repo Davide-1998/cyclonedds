@@ -201,7 +201,7 @@ int ddsi_xmsg_compare_fragid (const struct ddsi_xmsg *a, const struct ddsi_xmsg 
   ddsrt_nonnull_all;
 
 /** @component rtps_submsg */
-DDS_EXPORT void ddsi_xmsg_free (struct ddsi_xmsg *msg)
+DDS_EXPORT void ddsi_xmsg_free (struct ddsi_xmsg *m)
   ddsrt_nonnull_all;
 
 /** @component rtps_submsg */
