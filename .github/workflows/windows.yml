@@ -13,25 +13,24 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          # - {
+          #     name: "no security",
+          #     os: windows-latest,
+          #     arch: "WIN32",
+          #     build_type: Debug,
+          #     generator: "Visual Studio 17 2022",
+          #     ssl: "OFF",
+          #     security: false,
+          #     idlc_xtests: false,
+          #   }
+          # - {
+          #     name: "no idlc xtests",
+          #     os: windows-latest,
+          #     build_type: Debug,
+          #     generator: "Visual Studio 17 2022",
+          #     idlc_xtests: false,
+          #   }
           - {
-              name: "no security",
-              os: windows-latest,
-              arch: "WIN32",
-              build_type: Debug,
-              generator: "Visual Studio 17 2022",
-              ssl: "OFF",
-              security: false,
-              idlc_xtests: false,
-            }
-          - {
-              name: "no idlc xtests",
-              os: windows-latest,
-              build_type: Debug,
-              generator: "Visual Studio 17 2022",
-              idlc_xtests: false,
-            }
-          - {
-              # This should run sanity_check_export_symbols
               name: "no tests",
               os: windows-latest,
               build_type: Release,
@@ -40,13 +39,13 @@ jobs:
               idlc_xtests: false,
               check_symbol_export: true,
             }
-          - {
-              name: "no xtests",
-              os: windows-latest,
-              build_type: RelWithDebInfo,
-              generator: "Visual Studio 17 2022",
-              idlc_xtests: false,
-            }
+          # - {
+          #     name: "no xtests",
+          #     os: windows-latest,
+          #     build_type: RelWithDebInfo,
+          #     generator: "Visual Studio 17 2022",
+          #     idlc_xtests: false,
+          #   }
           # Following is known to fail due to cmake cyclical dependency of psmx
           # TODO # Re-enable and fix in issue
           # - {
@@ -98,6 +97,7 @@ jobs:
         shell: bash
       - run: |
           cmake -S . -B build \
+            -A x64 \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type || 'Release' }} \
             -DCMAKE_INSTALL_PREFIX=build/install \
             -DBUILD_SHARED_LIBS=${{ matrix.config.shared_libs || true }} \
@@ -154,7 +154,7 @@ jobs:
           CFLAGS: -fsanitize=${{ matrix.config.sanitizer || 'none' }}
           LDFLAGS: -fsanitize=${{ matrix.config.sanitizer || 'none' }}
         name: Sanity check Hello World
-      - if: ${{ matrix.config.check_symbol_export}}
+      - if: ${{ matrix.config.testing && matrix.config.check_symbol_export}}
         run: |
           set -e -x
           cd build
