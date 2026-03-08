@@ -129,7 +129,7 @@ DDS_EXPORT void ddsi_rbufpool_setowner (struct ddsi_rbufpool *rbp, ddsrt_thread_
 DDS_EXPORT void ddsi_rbufpool_free (struct ddsi_rbufpool *rbp);
 
 /** @component receive_buffers */
-DDS_EXPORT struct ddsi_rmsg *ddsi_rmsg_new (struct ddsi_rbufpool *rbufpool);
+DDS_EXPORT struct ddsi_rmsg *ddsi_rmsg_new (struct ddsi_rbufpool *rbp);
 
 /** @component receive_buffers */
 DDS_EXPORT void ddsi_rmsg_setsize (struct ddsi_rmsg *rmsg, uint32_t size);
