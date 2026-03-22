@@ -178,6 +178,8 @@ struct dds_cdrstream_ops_info {
   dds_data_type_properties_t data_types;
 };
 
+const struct dds_cdrstream_allocator dds_cdrstream_default_allocator = { ddsrt_malloc, ddsrt_realloc, ddsrt_free };
+
 static const struct dds_cdrstream_desc_mid_table static_empty_mid_table = { .table = (struct ddsrt_hh *) &ddsrt_hh_empty, .op0 = NULL };
 
 static const uint32_t *dds_stream_skip_adr (uint32_t insn, const uint32_t *ops)

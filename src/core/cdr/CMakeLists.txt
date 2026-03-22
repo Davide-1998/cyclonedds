@@ -11,6 +11,7 @@
 #
 
 if(NOT ${CYCLONEDDS_IS_TOP_LEVEL})
+  set(CYCLONEDDS_PROJECT_NAME ${PROJECT_NAME}) # Save to avoid override with CDR project
   cmake_minimum_required(VERSION 3.16)
   project(cdr VERSION 11.0.1 LANGUAGES C)
 endif()
@@ -33,16 +34,43 @@ if(${CYCLONEDDS_IS_TOP_LEVEL})
     COMPONENT dev)
 else()
   set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../../cmake/Modules")
-  include(Generate)
   include(GenerateExportHeader)
 
-  add_library(cdr)
-  add_library(${PROJECT_NAME}::cdr ALIAS cdr)
+  # Add ddsrt sources because cdr by not linking directly to ddsrt cannot know some symbols
+  # definitions
+  # TODO # Link directly DDSRT
+  set(CYCLONEDDS_DDSRT_DIR "${CMAKE_CURRENT_LIST_DIR}/../../ddsrt")
+  set(srcs_ddsrt
+    "${CYCLONEDDS_DDSRT_DIR}/src/bswap.c"
+    "${CYCLONEDDS_DDSRT_DIR}/src/heap/posix/heap.c"
+    "${CYCLONEDDS_DDSRT_DIR}/src/hopscotch.c"
+    "${CYCLONEDDS_DDSRT_DIR}/src/log.c"
+    "${CYCLONEDDS_DDSRT_DIR}/src/mh3.c"
+    "${CYCLONEDDS_DDSRT_DIR}/src/string.c"
+  )
 
-  target_sources(cdr PRIVATE ${srcs_cdr} ${hdrs_private_cdr} ${CMAKE_CURRENT_LIST_DIR}/../../ddsrt/src/bswap.c)
+  # We are not checking neither for FREERTOS or ZEPHYR, DDSRT should the one delegated for the work. Link to it
+  if(WIN32)
+    list(APPEND srcs_ddsrt
+      "${CYCLONEDDS_DDSRT_DIR}/src/sync/windows/sync.c"
+      "${CYCLONEDDS_DDSRT_DIR}/src/time/windows/time.c"
+      "${CYCLONEDDS_DDSRT_DIR}/src/threads/windows/threads.c"
+    )
+  else()
+    list(APPEND srcs_ddsrt
+      "${CYCLONEDDS_DDSRT_DIR}/src/sync/posix/sync.c"
+      "${CYCLONEDDS_DDSRT_DIR}/src/time/posix/time.c"
+      "${CYCLONEDDS_DDSRT_DIR}/src/threads/posix/threads.c"
+    )
+  endif()
+
+  add_library(cdr ${srcs_cdr} ${hdrs_private_cdr} ${srcs_ddsrt})
+  add_library(${CYCLONEDDS_PROJECT_NAME}::cdr ALIAS cdr)
+
   target_include_directories(cdr PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include"
-                                         "${PROJECT_BINARY_DIR}/include"
+                                         "${CMAKE_CURRENT_BINARY_DIR}/include"
                                          "${CMAKE_CURRENT_LIST_DIR}/../../ddsrt/include"
+                                         "$<BUILD_INTERFACE:${CYCLONEDDS_DDSRT_DIR}/src>" # Needed for threads_priv.h
                                          "${CMAKE_CURRENT_LIST_DIR}/../ddsc/include")
 
   configure_file(${CMAKE_CURRENT_LIST_DIR}/../../ddsrt/include/dds/config.h.in include/dds/config.h)
@@ -62,7 +90,7 @@ else()
 
   install(
     DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include/"
-              "${PROJECT_BINARY_DIR}/include/"
+              "${CMAKE_CURRENT_BINARY_DIR}/include/"
               "${CMAKE_CURRENT_LIST_DIR}/../../ddsrt/include/"
               "${CMAKE_CURRENT_LIST_DIR}/../ddsc/include/"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"

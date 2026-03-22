@@ -16,8 +16,6 @@
 
 static dds_allocator_t dds_allocator_fns = { ddsrt_malloc, ddsrt_realloc, ddsrt_free };
 
-const struct dds_cdrstream_allocator dds_cdrstream_default_allocator = { ddsrt_malloc, ddsrt_realloc, ddsrt_free };
-
 void * dds_alloc (size_t size)
 {
   void * ret = (dds_allocator_fns.malloc) (size);

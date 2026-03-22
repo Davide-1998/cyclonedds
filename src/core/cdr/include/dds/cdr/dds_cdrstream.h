@@ -116,6 +116,8 @@ typedef struct dds_cdrstream_allocator {
      custom allocator implementations. */
 } dds_cdrstream_allocator_t;
 
+DDS_INLINE_EXPORT extern const struct dds_cdrstream_allocator dds_cdrstream_default_allocator;
+
 typedef struct dds_cdrstream_desc_key {
   uint32_t ops_offs;   /* Offset for key ops */
   uint32_t idx;        /* Key index in containing type (definition order) */
@@ -158,7 +160,7 @@ DDSRT_STATIC_ASSERT (offsetof (dds_ostreamLE_t, x) == 0);
 DDSRT_STATIC_ASSERT (offsetof (dds_ostreamBE_t, x) == 0);
 
 /** @component cdr_serializer */
-uint32_t dds_cdr_alignto4_clear_and_resize (dds_ostream_t *os, const struct dds_cdrstream_allocator *allocator, uint32_t xcdr_version)
+DDS_EXPORT uint32_t dds_cdr_alignto4_clear_and_resize (dds_ostream_t *os, const struct dds_cdrstream_allocator *allocator, uint32_t xcdr_version)
   ddsrt_nonnull_all;
 
 /** @component cdr_serializer */
@@ -271,11 +273,11 @@ DDS_EXPORT uint32_t dds_stream_countops (const uint32_t *ops, uint32_t nkeys, co
   ddsrt_nonnull ((1));
 
 /** @component cdr_serializer */
-size_t dds_stream_check_optimize (const struct dds_cdrstream_desc *desc, uint32_t xcdr_version)
+DDS_EXPORT size_t dds_stream_check_optimize (const struct dds_cdrstream_desc *desc, uint32_t xcdr_version)
   ddsrt_nonnull_all;
 
 /** @component cdr_serializer */
-bool dds_stream_write_key (dds_ostream_t *os, enum dds_cdr_key_serialization_kind ser_kind, const struct dds_cdrstream_allocator *allocator, const char *sample, const struct dds_cdrstream_desc *desc)
+DDS_EXPORT bool dds_stream_write_key (dds_ostream_t *os, enum dds_cdr_key_serialization_kind ser_kind, const struct dds_cdrstream_allocator *allocator, const char *sample, const struct dds_cdrstream_desc *desc)
   ddsrt_attribute_warn_unused_result ddsrt_nonnull_all;
 
 /** @component cdr_serializer */
@@ -323,23 +325,23 @@ DDS_EXPORT size_t dds_stream_getsize_key (const char *sample, const struct dds_c
   ddsrt_nonnull_all ddsrt_attribute_warn_unused_result;
 
 /** @component cdr_serializer */
-uint16_t dds_stream_minimum_xcdr_version (const uint32_t *ops)
+DDS_EXPORT uint16_t dds_stream_minimum_xcdr_version (const uint32_t *ops)
   ddsrt_nonnull_all;
 
 /** @component cdr_serializer */
-uint32_t dds_stream_type_nesting_depth (const uint32_t *ops)
+DDS_EXPORT uint32_t dds_stream_type_nesting_depth (const uint32_t *ops)
   ddsrt_nonnull_all;
 
 /** @component cdr_serializer */
-uint32_t dds_stream_key_flags (struct dds_cdrstream_desc *desc, uint32_t *keysz_xcdrv1, uint32_t *keysz_xcdrv2)
+DDS_EXPORT uint32_t dds_stream_key_flags (struct dds_cdrstream_desc *desc, uint32_t *keysz_xcdrv1, uint32_t *keysz_xcdrv2)
   ddsrt_nonnull ((1));
 
 /** @component cdr_serializer */
-bool dds_stream_extensibility (const uint32_t *ops, enum dds_cdr_type_extensibility *ext)
+DDS_EXPORT bool dds_stream_extensibility (const uint32_t *ops, enum dds_cdr_type_extensibility *ext)
   ddsrt_nonnull_all;
 
 /** @component cdr_serializer */
-dds_data_type_properties_t dds_stream_data_types (const uint32_t *ops)
+DDS_EXPORT dds_data_type_properties_t dds_stream_data_types (const uint32_t *ops)
   ddsrt_nonnull_all;
 
 /** @component cdr_serializer */
