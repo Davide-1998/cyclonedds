@@ -169,11 +169,12 @@ if(ENABLE_SSL AND OPENSSL_FOUND)
   target_link_libraries(cunit_security_core PRIVATE dds_security_auth dds_security_ac dds_security_crypto dds_security_access_control_wrapper dds_security_authentication_wrapper dds_security_cryptography_wrapper)
   target_link_libraries(cunit_security_core PRIVATE OpenSSL::SSL)
   target_link_libraries(cunit_security_core PRIVATE security_openssl)
+  
+  if(NOT BUILD_SHARED_LIBS)
+    install(TARGETS dds_security_authentication_wrapper EXPORT "${PROJECT_NAME}")
+    install(TARGETS dds_security_cryptography_wrapper EXPORT "${PROJECT_NAME}")
+    install(TARGETS dds_security_access_control_wrapper EXPORT "${PROJECT_NAME}")
+  endif()
+
 endif()
 target_include_directories(cunit_security_core PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-
-if(NOT BUILD_SHARED_LIBS)
-  install(TARGETS dds_security_authentication_wrapper EXPORT "${PROJECT_NAME}")
-  install(TARGETS dds_security_cryptography_wrapper EXPORT "${PROJECT_NAME}")
-  install(TARGETS dds_security_access_control_wrapper EXPORT "${PROJECT_NAME}")
-endif()
