@@ -9,10 +9,6 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-if(NOT ${PROJECT_NAME} STREQUAL "CycloneDDS")
-  get_filename_component(dir ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
-  message(FATAL_ERROR "Top-level CMakeLists.txt was moved to the top-level directory.  Please run cmake on ${dir} instead of ${CMAKE_CURRENT_LIST_DIR}")
-endif()
 
 function(PREPEND var prefix)
   set(listVar "")

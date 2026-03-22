@@ -10,7 +10,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
 
-if(NOT ${CMAKE_PROJECT_NAME} STREQUAL "CycloneDDS")
+if(NOT ${CYCLONEDDS_IS_TOP_LEVEL})
   cmake_minimum_required(VERSION 3.16)
   project(cdr VERSION 11.0.1 LANGUAGES C)
 endif()
@@ -23,7 +23,7 @@ set(srcs_cdr
 set(hdrs_private_cdr
   "${CMAKE_CURRENT_LIST_DIR}/include/dds/cdr/dds_cdrstream.h")
 
-if(${CMAKE_PROJECT_NAME} STREQUAL "CycloneDDS")
+if(${CYCLONEDDS_IS_TOP_LEVEL})
   target_sources(ddsc PRIVATE ${srcs_cdr} ${hdrs_private_cdr})
   target_include_directories(ddsc PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
 

@@ -13,6 +13,15 @@ cmake_minimum_required(VERSION 3.16)
 # C++ is only for Iceoryx plugin
 project(CycloneDDS VERSION 11.0.1 LANGUAGES C CXX)
 
+# Set if the project is the top one. With CMake >= 3.21 the variable already exists
+if(CMAKE_VERSION VERSION_LESS "3.21")
+  if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    set(CYCLONEDDS_IS_TOP_LEVEL ON)
+  endif()  
+else ()
+  set(CYCLONEDDS_IS_TOP_LEVEL ${PROJECT_IS_TOP_LEVEL})
+endif()
+
 # Set a default build type if none was specified
 set(default_build_type "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
