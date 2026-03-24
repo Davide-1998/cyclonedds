@@ -59,6 +59,7 @@ endif()
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 if(NOT BUILD_SHARED_LIBS AND NOT CMAKE_CROSSCOMPILING)
   message(WARNING "It is probably best to build a static library as-if cross compiling (e.g., use -DCMAKE_CROSSCOMPILING=1 -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME} -DCMAKE_PREFIX_PATH=<path to shared-library build>)")
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
 # By default don't treat warnings as errors, else anyone building it with a different compiler that
@@ -328,9 +329,9 @@ if(MSVC)
 endif()
 
 # Build all executables and libraries into the top-level /bin and /lib folders.
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)

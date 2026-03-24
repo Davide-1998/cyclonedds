@@ -49,7 +49,7 @@ if(NOT ${_bison_hash_correct})
       COMMAND ${CMAKE_COMMAND} ARGS
         "-Dsource_dir=${source_dir}"
         "-Dbinary_dir=${binary_dir}"
-        "-DMAIN_PROJECT_DIR=${CMAKE_SOURCE_DIR}"
+        "-DMAIN_PROJECT_DIR=${CMAKE_CURRENT_SOURCE_DIR}/../../"
         -P ${CMAKE_CURRENT_LIST_DIR}/postprocess-parser.cmake
       DEPENDS ${binary_dir}/parser.c ${binary_dir}/parser.h
     )
