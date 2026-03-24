@@ -26,8 +26,8 @@ find_package(protobuf REQUIRED CONFIG)
 add_library(fuzz_handshake_harness fuzz_handshake_harness.c)
 target_include_directories(
   fuzz_handshake_harness PRIVATE
-  "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/ddsrt/include>"
-  "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/core/include>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../src/ddsrt/include>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../src/core/include>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src/core/ddsc/src>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src/core/ddsc/include>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src/core/ddsi/src>"
@@ -36,7 +36,7 @@ target_include_directories(
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src/ddsrt/include>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src/security/core/include>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src/security/core/tests>"
-  "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/security/core/tests>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../src/security/core/tests>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src/security/api/include>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../install/include>")
 
@@ -44,7 +44,7 @@ add_executable(fuzz_handshake fuzz_handshake.cc)
 protobuf_generate(TARGET fuzz_handshake LANGUAGE cpp PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/fuzz_handshake.proto")
 target_include_directories(
   fuzz_handshake PRIVATE
-  "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/ddsrt/include>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../src/ddsrt/include>"
   "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/../libprotobuf-mutator>"
   "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/../LPM/external.protobuf/include>"
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../install/include>"
