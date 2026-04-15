@@ -87,8 +87,7 @@ target_link_libraries(ddsc
   PRIVATE
     "$<BUILD_INTERFACE:ddsrt>"
   PUBLIC
-    # Link to CycloneDDS::cdr only when built as third party
-    $<$<NOT:$<BOOL:${CYCLONEDDS_IS_TOP_LEVEL}>>:${PROJECT_NAME}::cdr>
+    ${PROJECT_NAME}::cdr
 )
 target_compile_definitions(
   ddsc PUBLIC

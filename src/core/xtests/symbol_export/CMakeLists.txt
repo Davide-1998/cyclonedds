@@ -19,6 +19,7 @@ else()
 endif()
 
 set(DDSC_LIBRARY_FILEPATH ${DDSC_LIBRARY_PREFIX}ddsc.${DDSC_LIBRARY_POSTFIX})
+set(CDR_LIBRARY_FILEPATH ${DDSC_LIBRARY_PREFIX}cdr.${DDSC_LIBRARY_POSTFIX})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dds_library_loader.h.in 
                ${CMAKE_CURRENT_BINARY_DIR}/include/symbol_export/dds_library_loader.h 

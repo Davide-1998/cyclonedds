@@ -30,6 +30,14 @@ int main() {
     return EXIT_FAILURE;
   }
 
+  // Fail if cdr.dll cannot be loaded
+  dds_loaded_library_t cdr_library;
+  cyclonedds_load_library(&cdr_library, CDR_LIBRARY_NAME);
+  if (cdr_library.handle == NULL) {
+    close_library(ddsc_library.handle); // Must close already opened DDSC
+    return EXIT_FAILURE;
+  }
+
   int result = EXIT_SUCCESS;
 
   // dds.h
@@ -437,56 +445,54 @@ int main() {
   check_symbol_export(&result, &ddsc_library, "dds_lookup_statistic");
 
   // dds_cdrstream.h
-  check_symbol_export(&result, &ddsc_library, "dds_istream_init");
-  check_symbol_export(&result, &ddsc_library, "dds_istream_fini");
-  check_symbol_export(&result, &ddsc_library, "dds_ostream_init");
-  check_symbol_export(&result, &ddsc_library, "dds_ostream_fini");
-  check_symbol_export(&result, &ddsc_library, "dds_ostreamLE_init");
-  check_symbol_export(&result, &ddsc_library, "dds_ostreamLE_fini");
-  check_symbol_export(&result, &ddsc_library, "dds_ostreamBE_init");
-  check_symbol_export(&result, &ddsc_library, "dds_ostreamBE_fini");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_normalize");
-  check_symbol_export(&result, &ddsc_library,
-                      "dds_stream_normalize_xcdr2_data");
+  check_symbol_export(&result, &cdr_library, "dds_istream_init");
+  check_symbol_export(&result, &cdr_library, "dds_istream_fini");
+  check_symbol_export(&result, &cdr_library, "dds_ostream_init");
+  check_symbol_export(&result, &cdr_library, "dds_ostream_fini");
+  check_symbol_export(&result, &cdr_library, "dds_ostreamLE_init");
+  check_symbol_export(&result, &cdr_library, "dds_ostreamLE_fini");
+  check_symbol_export(&result, &cdr_library, "dds_ostreamBE_init");
+  check_symbol_export(&result, &cdr_library, "dds_ostreamBE_fini");
+  check_symbol_export(&result, &cdr_library, "dds_stream_normalize");
+  check_symbol_export(&result, &cdr_library, "dds_stream_normalize_xcdr2_data");
 
-  check_symbol_export(&result, &ddsc_library, "dds_stream_write");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_writeLE");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_writeBE");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_write_with_mid");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_write_with_midLE");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_write_with_midBE");
-  check_symbol_export(&result, &ddsc_library,
+  check_symbol_export(&result, &cdr_library, "dds_stream_write");
+  check_symbol_export(&result, &cdr_library, "dds_stream_writeLE");
+  check_symbol_export(&result, &cdr_library, "dds_stream_writeBE");
+  check_symbol_export(&result, &cdr_library, "dds_stream_write_with_mid");
+  check_symbol_export(&result, &cdr_library, "dds_stream_write_with_midLE");
+  check_symbol_export(&result, &cdr_library, "dds_stream_write_with_midBE");
+  check_symbol_export(&result, &cdr_library,
                       "dds_stream_write_with_byte_order");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_write_sample");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_write_sampleLE");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_write_sampleBE");
+  check_symbol_export(&result, &cdr_library, "dds_stream_write_sample");
+  check_symbol_export(&result, &cdr_library, "dds_stream_write_sampleLE");
+  check_symbol_export(&result, &cdr_library, "dds_stream_write_sampleBE");
 
-  check_symbol_export(&result, &ddsc_library, "dds_stream_getsize_sample");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_getsize_key");
+  check_symbol_export(&result, &cdr_library, "dds_stream_getsize_sample");
+  check_symbol_export(&result, &cdr_library, "dds_stream_getsize_key");
 
-  check_symbol_export(&result, &ddsc_library, "dds_stream_read");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_read_key");
+  check_symbol_export(&result, &cdr_library, "dds_stream_read");
+  check_symbol_export(&result, &cdr_library, "dds_stream_read_key");
 
-  check_symbol_export(&result, &ddsc_library, "dds_stream_read_sample");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_free_sample");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_countops");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_print_key");
-  check_symbol_export(&result, &ddsc_library, "dds_stream_print_sample");
+  check_symbol_export(&result, &cdr_library, "dds_stream_read_sample");
+  check_symbol_export(&result, &cdr_library, "dds_stream_free_sample");
+  check_symbol_export(&result, &cdr_library, "dds_stream_countops");
+  check_symbol_export(&result, &cdr_library, "dds_stream_print_key");
+  check_symbol_export(&result, &cdr_library, "dds_stream_print_sample");
 
-  check_symbol_export(&result, &ddsc_library,
+  check_symbol_export(&result, &cdr_library,
                       "dds_stream_extract_key_from_data");
-  check_symbol_export(&result, &ddsc_library,
-                      "dds_stream_extract_key_from_key");
-  check_symbol_export(&result, &ddsc_library,
+  check_symbol_export(&result, &cdr_library, "dds_stream_extract_key_from_key");
+  check_symbol_export(&result, &cdr_library,
                       "dds_stream_extract_keyBE_from_data");
-  check_symbol_export(&result, &ddsc_library,
+  check_symbol_export(&result, &cdr_library,
                       "dds_stream_extract_keyBE_from_key");
   check_symbol_export(&result, &ddsc_library,
                       "dds_cdrstream_desc_from_topic_desc");
-  check_symbol_export(&result, &ddsc_library,
+  check_symbol_export(&result, &cdr_library,
                       "dds_cdrstream_desc_init_with_nops");
-  check_symbol_export(&result, &ddsc_library, "dds_cdrstream_desc_init");
-  check_symbol_export(&result, &ddsc_library, "dds_cdrstream_desc_fini");
+  check_symbol_export(&result, &cdr_library, "dds_cdrstream_desc_init");
+  check_symbol_export(&result, &cdr_library, "dds_cdrstream_desc_fini");
 
   // dds_psmx.h
   check_symbol_export(&result, &ddsc_library, "dds_add_psmx_endpoint_to_list");
@@ -1256,6 +1262,7 @@ int main() {
          result == EXIT_SUCCESS ? "OK" : "FAILED");
 
   close_library(ddsc_library.handle);
+  close_library(cdr_library.handle);
 
   return result;
 }

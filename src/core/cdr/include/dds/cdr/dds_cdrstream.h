@@ -116,7 +116,7 @@ typedef struct dds_cdrstream_allocator {
      custom allocator implementations. */
 } dds_cdrstream_allocator_t;
 
-DDS_INLINE_EXPORT extern const struct dds_cdrstream_allocator dds_cdrstream_default_allocator;
+DDS_INLINE_EXPORT const struct dds_cdrstream_allocator dds_cdrstream_default_allocator;
 
 typedef struct dds_cdrstream_desc_key {
   uint32_t ops_offs;   /* Offset for key ops */
