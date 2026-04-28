@@ -11,6 +11,7 @@
 #ifndef DDS_CDRSTREAM_H
 #define DDS_CDRSTREAM_H
 
+#include "dds/export.h"
 #include "dds/dds.h"
 #include "dds/ddsrt/bswap.h"
 #include "dds/ddsrt/hopscotch.h"
