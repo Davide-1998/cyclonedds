@@ -893,7 +893,7 @@ static bool psmx_iox2_init_writer (psmx_iox2_endpoint_t *ep, psmx_iox2_topic_t *
   
   dds_reliability_kind_t rel;
   (void) dds_qget_reliability (qos, &rel, NULL);
-  iox2_port_factory_publisher_builder_unable_to_deliver_strategy (&publisher_builder_handle, rel == DDS_RELIABILITY_BEST_EFFORT ? iox2_unable_to_deliver_strategy_e_DISCARD_SAMPLE : iox2_unable_to_deliver_strategy_e_BLOCK);
+  iox2_port_factory_publisher_builder_unable_to_deliver_strategy (&publisher_builder_handle, rel == DDS_RELIABILITY_BEST_EFFORT ? iox2_unable_to_deliver_strategy_e_DISCARD_DATA : iox2_unable_to_deliver_strategy_e_RETRY_UNTIL_DELIVERED);
   
   int e = iox2_port_factory_publisher_builder_create (publisher_builder_handle, NULL, &ep->iox2_handle.wr);
   if (e != IOX2_OK) {
