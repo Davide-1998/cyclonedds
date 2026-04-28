@@ -62,6 +62,6 @@ jobs:
         name: install CXX bindings
       - run: |
           cd cyclonedds-cxx/build
-          ctest -j 4 --output-on-failure --schedule-random
+          ctest -j --output-on-failure --schedule-random
         shell: bash
         name: Run CycloneDDS C++ tests
