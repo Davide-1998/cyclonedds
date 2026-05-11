@@ -297,5 +297,6 @@ jobs:
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/build/lib/
           cd build
           test -e ./bin/symbol_export_test
+          ../scripts/check_symbol_export.bash ./bin/symbol_export_test
         shell: bash
         name: Sanity check export symbols
