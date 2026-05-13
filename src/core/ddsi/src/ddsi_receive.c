@@ -384,11 +384,15 @@ static enum validation_result validate_Data (const struct ddsi_receiver_state *r
     return VR_MALFORMED;
   sampleinfo->fragsize = 0; /* for unfragmented data, fragsize = 0 works swell */
 
+  /* QoS and/or payload, so octetsToInlineQos must be within the
+     msg; since the serialized data and serialized parameter lists
+     have a 4 byte header, that one, too must fit */
+  if (offsetof (ddsi_rtps_data_datafrag_common_t, octetsToInlineQos) + sizeof (msg->x.octetsToInlineQos) + msg->x.octetsToInlineQos + 4 > size)
+    return VR_MALFORMED;
+
   if ((msg->x.smhdr.flags & (DDSI_DATA_FLAG_INLINE_QOS | DDSI_DATA_FLAG_DATAFLAG | DDSI_DATA_FLAG_KEYFLAG)) == 0)
   {
-    /* no QoS, no payload, so octetsToInlineQos will never be used
-       though one would expect octetsToInlineQos and size to be in
-       agreement or octetsToInlineQos to be 0 or so */
+    /* no QoS, no payload */
     *payloadp = NULL;
     *keyhashp = NULL;
     sampleinfo->size = 0; /* size is full payload size, no payload & unfragmented => size = 0 */
@@ -396,12 +400,6 @@ static enum validation_result validate_Data (const struct ddsi_receiver_state *r
     sampleinfo->complex_qos = 0;
     goto accept;
   }
-
-  /* QoS and/or payload, so octetsToInlineQos must be within the
-     msg; since the serialized data and serialized parameter lists
-     have a 4 byte header, that one, too must fit */
-  if (offsetof (ddsi_rtps_data_datafrag_common_t, octetsToInlineQos) + sizeof (msg->x.octetsToInlineQos) + msg->x.octetsToInlineQos + 4 > size)
-    return VR_MALFORMED;
 
   ptr = (unsigned char *) msg + offsetof (ddsi_rtps_data_datafrag_common_t, octetsToInlineQos) + sizeof (msg->x.octetsToInlineQos) + msg->x.octetsToInlineQos;
   if (msg->x.smhdr.flags & DDSI_DATA_FLAG_INLINE_QOS)
@@ -1293,7 +1291,7 @@ static int handle_Heartbeat (struct ddsi_receiver_state *rst, ddsrt_etime_t tnow
   ddsrt_mutex_lock (&pwr->e.lock);
   if (msg->smhdr.flags & DDSI_HEARTBEAT_FLAG_LIVELINESS &&
       pwr->c.xqos->liveliness.kind != DDS_LIVELINESS_AUTOMATIC &&
-      pwr->c.xqos->liveliness.lease_duration != DDS_INFINITY)
+      pwr->lease != NULL)
   {
     if ((lease = ddsrt_atomic_ldvoidp (&pwr->c.proxypp->minl_man)) != NULL)
       ddsi_lease_renew (lease, tnow);
@@ -1995,15 +1993,14 @@ static int handle_Gap (struct ddsi_receiver_state *rst, ddsrt_etime_t tnow, stru
   return 1;
 }
 
-static struct ddsi_serdata *get_serdata (struct ddsi_sertype const * const type, const struct ddsi_rdata *fragchain, uint32_t sz, int justkey, unsigned statusinfo, ddsrt_wctime_t tstamp)
+static dds_return_t get_serdata (struct ddsi_serdata **sd_out, struct ddsi_sertype const * const type, const struct ddsi_rdata *fragchain, uint32_t sz, int justkey, unsigned statusinfo, ddsrt_wctime_t tstamp)
 {
-  struct ddsi_serdata *sd = ddsi_serdata_from_ser (type, justkey ? SDK_KEY : SDK_DATA, fragchain, sz);
-  if (sd)
-  {
-    sd->statusinfo = statusinfo;
-    sd->timestamp = tstamp;
-  }
-  return sd;
+  dds_return_t rc;
+  if ((rc = ddsi_serdata_from_ser_err (sd_out, type, justkey ? SDK_KEY : SDK_DATA, fragchain, sz)) != DDS_RETCODE_OK)
+    return rc;
+  (*sd_out)->statusinfo = statusinfo;
+  (*sd_out)->timestamp = tstamp;
+  return rc;
 }
 
 struct remote_sourceinfo {
@@ -2028,6 +2025,7 @@ static struct ddsi_serdata *remote_make_sample (struct ddsi_tkmap_instance **tk,
   const ddsi_plist_t *qos = si->qos;
   const char *failmsg = NULL;
   struct ddsi_serdata *sample = NULL;
+  dds_return_t get_serdata_result = DDS_RETCODE_ERROR;
 
   if (si->statusinfo == 0)
   {
@@ -2046,7 +2044,7 @@ static struct ddsi_serdata *remote_make_sample (struct ddsi_tkmap_instance **tk,
                   si->data_smhdr_flags, sampleinfo->size);
       return NULL;
     }
-    sample = get_serdata (type, fragchain, sampleinfo->size, 0, statusinfo, tstamp);
+    get_serdata_result = get_serdata (&sample, type, fragchain, sampleinfo->size, 0, statusinfo, tstamp);
   }
   else if (sampleinfo->size)
   {
@@ -2055,12 +2053,12 @@ static struct ddsi_serdata *remote_make_sample (struct ddsi_tkmap_instance **tk,
        as one would expect to receive */
     if (data_smhdr_flags & DDSI_DATA_FLAG_KEYFLAG)
     {
-      sample = get_serdata (type, fragchain, sampleinfo->size, 1, statusinfo, tstamp);
+      get_serdata_result = get_serdata (&sample, type, fragchain, sampleinfo->size, 1, statusinfo, tstamp);
     }
     else
     {
       assert (data_smhdr_flags & DDSI_DATA_FLAG_DATAFLAG);
-      sample = get_serdata (type, fragchain, sampleinfo->size, 0, statusinfo, tstamp);
+      get_serdata_result = get_serdata (&sample, type, fragchain, sampleinfo->size, 0, statusinfo, tstamp);
     }
   }
   else if (data_smhdr_flags & DDSI_DATA_FLAG_INLINE_QOS)
@@ -2077,7 +2075,7 @@ static struct ddsi_serdata *remote_make_sample (struct ddsi_tkmap_instance **tk,
        * hash. This means the keyhash can't be decoded into a sample. */
       failmsg = "keyhash is protected";
     }
-    else if ((sample = ddsi_serdata_from_keyhash (type, &qos->keyhash)) == NULL)
+    else if ((get_serdata_result = ddsi_serdata_from_keyhash_err (&sample, type, &qos->keyhash)) != DDS_RETCODE_OK)
       failmsg = "keyhash is MD5 and can't be converted to key value";
     else
     {
@@ -2089,18 +2087,22 @@ static struct ddsi_serdata *remote_make_sample (struct ddsi_tkmap_instance **tk,
   {
     failmsg = "no content whatsoever";
   }
-  if (sample == NULL)
+  if (get_serdata_result != DDS_RETCODE_OK)
   {
     /* No message => error out */
     const struct ddsi_proxy_writer *pwr = sampleinfo->pwr;
     ddsi_guid_t guid;
+    sample = NULL;
     if (pwr) guid = pwr->e.guid; else memset (&guid, 0, sizeof (guid));
-    DDS_CWARNING (&gv->logconfig,
-                  "data(application, vendor %u.%u): "PGUIDFMT" #%"PRIu64": deserialization %s/%s failed (%s)\n",
-                  sampleinfo->rst->vendor.id[0], sampleinfo->rst->vendor.id[1],
-                  PGUID (guid), sampleinfo->seq,
-                  pwr && (pwr->c.xqos->present & DDSI_QP_TOPIC_NAME) ? pwr->c.xqos->topic_name : "", type->type_name,
-                  failmsg ? failmsg : "for reasons unknown");
+    if (get_serdata_result != DDS_RETCODE_NO_DATA)
+    {
+      DDS_CWARNING (&gv->logconfig,
+                    "data(application, vendor %u.%u): "PGUIDFMT" #%"PRIu64": deserialization %s/%s failed (%s)\n",
+                    sampleinfo->rst->vendor.id[0], sampleinfo->rst->vendor.id[1],
+                    PGUID (guid), sampleinfo->seq,
+                    pwr && (pwr->c.xqos->present & DDSI_QP_TOPIC_NAME) ? pwr->c.xqos->topic_name : "", type->type_name,
+                    failmsg ? failmsg : "for reasons unknown");
+    }
   }
   else
   {

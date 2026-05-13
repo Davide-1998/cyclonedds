@@ -805,7 +805,7 @@ static dds_return_t deser_type_information (void * restrict dst, struct flagset 
   dds_return_t ret = 0;
 
   buf = ddsrt_memdup (dd->buf, dd->bufsz);
-  if (!dds_stream_normalize_xcdr2_data ((char *) buf, &srcoff, (uint32_t) dd->bufsz, dd->bswap, DDS_XTypes_TypeInformation_desc.m_ops))
+  if (dds_stream_normalize_xcdr2_data ((char *) buf, &srcoff, (uint32_t) dd->bufsz, dd->bswap, DDS_XTypes_TypeInformation_desc.m_ops) != DDS_STREAM_NORMALIZE_SUCCESS)
   {
     ret = DDS_RETCODE_BAD_PARAMETER;
     goto err_normalize;
@@ -1161,7 +1161,12 @@ static dds_return_t deser_generic_r (void * restrict dst, size_t * restrict dsto
         if (deser_uint32 (&x->length, dd, srcoff) < 0 || x->length > dd->bufsz - *srcoff)
           goto fail;
         const size_t elem_size = ser_generic_srcsize (desc + 1);
-        x->value = x->length ? ddsrt_malloc (x->length * elem_size) : NULL;
+        if (elem_size != 0 && x->length > UINT32_MAX / elem_size)
+          goto fail;
+        if (x->length == 0)
+          x->value = NULL;
+        else if ((x->value = ddsrt_malloc (x->length * elem_size)) == NULL)
+          goto fail;
         for (uint32_t i = 0; i < x->length; i++)
         {
           size_t elem_off = i * elem_size;

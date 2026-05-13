@@ -212,9 +212,9 @@ static int plain_collection_header_compare (struct DDS_XTypes_PlainCollectionHea
   if (is_assignability_check)
   {
     if ((aef & (DDS_XTypes_TRY_CONSTRUCT1 | DDS_XTypes_TRY_CONSTRUCT2)) == 0)
-      aef |= DDS_XTypes_TRY_CONSTRUCT1;
+      aef |= DDS_XTypes_TRY_CONSTRUCT_DISCARD;
     if ((bef & (DDS_XTypes_TRY_CONSTRUCT1 | DDS_XTypes_TRY_CONSTRUCT2)) == 0)
-      bef |= DDS_XTypes_TRY_CONSTRUCT1;
+      bef |= DDS_XTypes_TRY_CONSTRUCT_DISCARD;
   }
   if (aef != bef)
     return aef > bef ? 1 : -1;
@@ -2528,6 +2528,11 @@ static bool xt_is_assignable_from_union (struct ddsi_domaingv *gv, const struct 
 
   /* Note that union members are ordered by their member index (=ordering in idl) and not by their member ID */
   uint32_t i1_max = t1->_u.union_type.members.length, i2_max = t2->_u.union_type.members.length;
+  /* Rule: If T1 (and therefore T2) extensibility is final then the set of labels is identical. By marking it
+     non-assignable early if the number of labels is different, the remainder only needs to check that the
+     cases in T1 exist in T2. */
+  if (i1_max != i2_max && xt_get_extensibility (t1) == DDS_XTypes_IS_FINAL)
+    return xt_non_assignable (reason, DDSI_NONASSIGN_MISSING_CASE, t1, t2, 0);
   bool any_match = false;
   for (uint32_t i1 = 0; i1 < i1_max; i1++)
   {
@@ -2535,6 +2540,21 @@ static bool xt_is_assignable_from_union (struct ddsi_domaingv *gv, const struct 
     const struct xt_type *m1t = ddsi_xt_unalias (&m1->type->xt);
     bool m2_id_match = false, m2_labels_match = true, t1_selects_t2_member = false;
     struct xt_union_member *def_m2 = NULL;
+    /* Rule: Any members in T1 and T2 that have the same name also have the same ID and any members
+       with the same ID also have the same name. */
+    if (!tce->ignore_member_names)
+    {
+      for (uint32_t i2 = i1; i2 < i2_max + i1; i2++)
+      {
+        struct xt_union_member *m2 = &t2->_u.union_type.members.seq[i2 % i2_max];
+        if ((m1->id == m2->id) != xt_namehash_eq (&m1->detail.name_hash, &m2->detail.name_hash))
+        {
+          enum ddsi_non_assignability_code code;
+          code = (m1->id == m2->id) ? DDSI_NONASSIGN_NAME_HASH_DIFFERS : DDSI_NONASSIGN_MEMBER_ID_DIFFERS;
+          return xt_non_assignable (reason, code, t1, t2, m1->id);
+        }
+      }
+    }
     for (uint32_t i2 = i1; i2 < i2_max + i1; i2++)
     {
       struct xt_union_member *m2 = &t2->_u.union_type.members.seq[i2 % i2_max];
@@ -2542,11 +2562,6 @@ static bool xt_is_assignable_from_union (struct ddsi_domaingv *gv, const struct 
       if (m1->id == m2->id)
       {
         m2_id_match = true;
-
-        /* Rule: Any members in T1 and T2 that have the same name also have the same ID and any members
-        with the same ID also have the same name. */
-        if (!xt_namehash_eq (&m1->detail.name_hash, &m2->detail.name_hash) && !tce->ignore_member_names)
-          return xt_non_assignable (reason, DDSI_NONASSIGN_NAME_HASH_DIFFERS, t1, t2, m1->id);
       }
 
       /* Rule: If T1 and T2 both have default labels, the type associated with T1 default member is assignable from
@@ -2631,17 +2646,63 @@ static bool xt_is_assignable_from_struct (struct ddsi_domaingv *gv, const struct
       TypeObject idl states that its ordered by member_id...) */
   uint32_t i1_max = te1->_u.structure.members.length, i2_max = te2->_u.structure.members.length;
   bool any_member_match = false;
+
+  /* Pre-processing: check types resolved and count the number of keys */
+  uint32_t t1_nkeys = 0, t2_nkeys = 0;
   for (uint32_t i1 = 0; i1 < i1_max; i1++)
   {
     const struct xt_struct_member *m1 = &te1->_u.structure.members.seq[i1];
     const struct xt_type *m1t = ddsi_xt_unalias (&m1->type->xt);
     if (!xt_is_assignable_check_resolved (m1t, reason, t1, m1->id))
       goto struct_failed;
+    if (m1->flags & DDS_XTypes_IS_KEY)
+      t1_nkeys++;
+  }
+  for (uint32_t i2 = 0; i2 < i2_max; i2++)
+  {
+    const struct xt_struct_member *m2 = &te2->_u.structure.members.seq[i2];
+    const struct xt_type *m2t = ddsi_xt_unalias (&m2->type->xt);
+    if (!xt_is_assignable_check_resolved (m2t, reason, t2, m2->id))
+      goto struct_failed;
+    if (m2->flags & DDS_XTypes_IS_KEY)
+      t2_nkeys++;
+  }
+  /* Pre-process for rule: "Members marked as key in either T1 or T2 appear (i.e., have a
+     corresponding member of the same member ID) in both T1 and T2." If the number of keys
+     differs, this is trivially false. If the number of keys is the same, we only need to
+     check that we found a match for each key in T1. */
+  if (t1_nkeys != t2_nkeys)
+  {
+    xt_non_assignable (reason, DDSI_NONASSIGN_KEY_DIFFERS, t1, t2, 0);
+    goto struct_failed;
+  }
+  /* Implement assignability rules */
+  for (uint32_t i1 = 0; i1 < i1_max; i1++)
+  {
+    const struct xt_struct_member *m1 = &te1->_u.structure.members.seq[i1];
+    const struct xt_type *m1t = ddsi_xt_unalias (&m1->type->xt);
 
     bool match = false,
       m1_opt = (m1->flags & DDS_XTypes_IS_OPTIONAL),
       m1_mu = (m1->flags & DDS_XTypes_IS_MUST_UNDERSTAND),
       m1_k = (m1->flags & DDS_XTypes_IS_KEY);
+
+    /* Rule: Any members in T1 and T2 that have the same name also have the same ID and any members
+       with the same ID also have the same name. */
+    if (!tce->ignore_member_names)
+    {
+      for (uint32_t i2 = i1; i2 < i2_max + i1; i2++)
+      {
+        struct xt_struct_member *m2 = &te2->_u.structure.members.seq[i2 % i2_max];
+        if ((m1->id == m2->id) != xt_namehash_eq (&m1->detail.name_hash, &m2->detail.name_hash))
+        {
+          enum ddsi_non_assignability_code code;
+          code = (m1->id == m2->id) ? DDSI_NONASSIGN_NAME_HASH_DIFFERS : DDSI_NONASSIGN_MEMBER_ID_DIFFERS;
+          xt_non_assignable (reason, code, t1, t2, m1->id);
+          goto struct_failed;
+        }
+      }
+    }
     for (uint32_t i2 = i1; i2 < i2_max + i1; i2++)
     {
       struct xt_struct_member *m2 = &te2->_u.structure.members.seq[i2 % i2_max];
@@ -2651,16 +2712,6 @@ static bool xt_is_assignable_from_struct (struct ddsi_domaingv *gv, const struct
         any_member_match = true;
         match = true;
         const struct xt_type *m2t = ddsi_xt_unalias (&m2->type->xt);
-        if (!xt_is_assignable_check_resolved (m2t, reason, t2, m2->id))
-          goto struct_failed;
-
-        /* Rule: "Any members in T1 and T2 that have the same name also have the same ID and any members with the
-            same ID also have the same name." */
-        if (!xt_namehash_eq (&m1->detail.name_hash, &m2->detail.name_hash) && !tce->ignore_member_names)
-        {
-          xt_non_assignable (reason, DDSI_NONASSIGN_NAME_HASH_DIFFERS, t1, t2, m1->id);
-          goto struct_failed;
-        }
 
         /* Rule: "For any member m2 in T2, if there is a member m1 in T1 with the same member ID, then the type
             KeyErased(m1.type) is-assignable from the type KeyErased(m2.type) */

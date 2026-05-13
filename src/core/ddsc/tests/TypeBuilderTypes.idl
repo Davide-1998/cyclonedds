@@ -542,4 +542,106 @@ module TypeBuilderTypes {
     @optional @id(26) sequence<sequence<t49k> > f7;
   };
 
+  // try-construct
+  @final
+  enum en50f {
+    EN50F_1, EN50F_2, EN50F_3
+  };
+  @appendable
+  enum en50a {
+    EN50A_1, EN50A_2, EN50A_3
+  };
+  typedef sequence<en50a, 1> t50_1;
+  typedef sequence<@try_construct(USE_DEFAULT) en50a, 1> t50_2;
+  struct t50 {
+    en50f f1;
+    en50a f2;
+    /*@try_construct()*/ en50a f3;
+    @try_construct(USE_DEFAULT) en50a f4;
+    @try_construct(DISCARD) en50a f5;
+    t50_1 f6;
+    t50_2 f7;
+    sequence<en50a, 1> f8;
+    sequence<@try_construct(USE_DEFAULT) en50a, 1> f9;
+    /*@try_construct()*/ t50_1 f10;
+    @try_construct(TRIM) t50_1 f11;
+    @try_construct(TRIM) sequence<@try_construct(USE_DEFAULT) en50a, 1> f12;
+  };
+
+  typedef string<3> t51_1;
+  struct t51 {
+    t51_1 f1;
+    @try_construct(TRIM) t51_1 f2;
+    @try_construct(USE_DEFAULT) t51_1 f3;
+    sequence<t51_1, 1> f4;
+    @try_construct(TRIM) sequence<t51_1, 1> f5;
+    sequence<@try_construct(TRIM) t51_1, 1> f6;
+    sequence<@try_construct(USE_DEFAULT) t51_1, 1> f7;
+    @try_construct(TRIM) sequence<@try_construct(TRIM) t51_1, 1> f8;
+    @try_construct(TRIM) sequence<@try_construct(USE_DEFAULT) t51_1, 1> f9;
+  };
+
+  struct t52 {
+    @try_construct(TRIM) sequence<sequence<t51_1, 1>, 1> f1[2][2];
+    sequence<@try_construct(TRIM) sequence<t51_1, 1>, 1> f2[2][2];
+    @try_construct(TRIM) sequence<sequence<t51_1, 1>, 1> f3[2][2];
+    @try_construct(TRIM) sequence<@try_construct(TRIM) sequence<t51_1, 1>, 1> f4[2][2];
+    @try_construct(TRIM) sequence<sequence<@try_construct(TRIM) t51_1, 1>, 1> f5[2][2];
+    sequence<@try_construct(TRIM) sequence<@try_construct(TRIM) t51_1, 1>, 1> f6[2][2];
+    @try_construct(TRIM) sequence<sequence<@try_construct(TRIM) t51_1, 1>, 1> f7[2][2];
+    @try_construct(TRIM) sequence<@try_construct(TRIM) sequence<@try_construct(TRIM) t51_1, 1>, 1> f8[2][2];
+  };
+
+  // unions with 64-bit and bitmask discriminants (FIXME: only half-heartedly supported)
+  @nested @final union t53a switch (uint64) {
+    case 1: octet f1;
+    case 0x3456789a: string f2;
+  };
+  
+  @final struct t53 {
+    t53a f1;
+  };
+
+  @final bitmask t54a {
+    t54a_a, t54a_b, t54a_c
+  };
+  
+  @nested @final union t54b switch (t54a) {
+    case t54a_a: char f1;
+    case t54a_b | t54a_c: double f2;
+    case t54a_c: string f3;
+    default: octet f4;
+  };
+
+  @final struct t54 {
+    t54b f1;
+  };
+
+  // unions with signed integer discriminants and negative labels
+  @nested @final union t55a switch (int8) {
+    case -128: char f1;
+    case -1: short f2;
+    case 1: long f3;
+    case 127: float f4;
+  };
+
+  @nested @final union t55b switch (int16) {
+    case -32768: char f1;
+    case -1: short f2;
+    case 1: long f3;
+    case 32767: float f4;
+  };
+
+  @nested @final union t55c switch (int32) {
+    case -2147483648: char f1;
+    case -1: short f2;
+    case 1: long f3;
+    case 2147483647: float f4;
+  };
+
+  @final struct t55 {
+    t55a f1;
+    t55b f2;
+    t55c f3;
+  };
 };

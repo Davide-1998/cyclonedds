@@ -397,10 +397,11 @@ void ddsi_deliver_historical_data (const struct ddsi_writer *wr, const struct dd
   while (ddsi_whc_sample_iter_borrow_next (&it, &sample))
   {
     struct ddsi_serdata *payload;
-    if ((payload = ddsi_serdata_ref_as_type (rd->type, sample.serdata)) == NULL)
+    if (ddsi_serdata_ref_as_type (&payload, rd->type, sample.serdata) != DDS_RETCODE_OK)
     {
-      GVWARNING ("local: deserialization of %s/%s as %s/%s failed in topic type conversion\n",
-                 wr->xqos->topic_name, wr->type->type_name, rd->xqos->topic_name, rd->type->type_name);
+      if (payload == NULL)
+        GVWARNING ("local: deserialization of %s/%s as %s/%s failed in topic type conversion\n",
+                   wr->xqos->topic_name, wr->type->type_name, rd->xqos->topic_name, rd->type->type_name);
     }
     else
     {
